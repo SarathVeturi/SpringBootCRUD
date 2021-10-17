@@ -1,6 +1,6 @@
 package com.app.spb.exception;
 
-public class InsufficientAmountException extends RuntimeException{
+public class InsufficientAmountException extends Exception{
 
 	/**
 	 * 

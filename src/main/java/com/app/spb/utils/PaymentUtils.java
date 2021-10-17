@@ -16,7 +16,7 @@ public class PaymentUtils {
 		paymentMap.put("acc4", 5000.0);
 	}
 	
-	public static boolean validatePayAmount(String accNo, double toBepaidAmount) {
+	public static boolean validatePayAmount(String accNo, double toBepaidAmount) throws InsufficientAmountException{
 		if(toBepaidAmount > paymentMap.get(accNo)) {
 			throw new InsufficientAmountException("Insufficient Amount in account");
 		}else {

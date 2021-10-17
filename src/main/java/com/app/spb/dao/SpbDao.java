@@ -3,9 +3,12 @@ package com.app.spb.dao;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.app.spb.entity.PaymentInfo;
 import com.app.spb.entity.Product;
+import com.app.spb.exception.InsufficientAmountException;
 import com.app.spb.repository.PaymentInfoRepository;
 import com.app.spb.repository.ProductRepository;
 
@@ -13,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
+@Transactional(rollbackFor = Exception.class, propagation = Propagation.SUPPORTS)
 public class SpbDao {
 	
 	private final ProductRepository productRepository;
