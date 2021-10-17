@@ -13,6 +13,7 @@ import com.app.spb.dto.PurchaseAckResponse;
 import com.app.spb.dto.PurchaseRequest;
 import com.app.spb.entity.PaymentInfo;
 import com.app.spb.entity.Product;
+import com.app.spb.exception.InsufficientAmountException;
 import com.app.spb.utils.PaymentUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,21 +28,22 @@ public class ProductService {
 	private final ObjectMapper objectMapper;
 
 	private final Logger log = LoggerFactory.getLogger(ProductService.class);
-	
-	@Transactional // (readOnly = false, isolation = Isolation.READ_COMMITTED,propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
-	public PurchaseAckResponse getPurchaseDetails(PurchaseRequest request) {
 
-		
+// (readOnly = false, isolation = Isolation.READ_COMMITTED,propagation = Propagation.SUPPORTS)
+	@Transactional(rollbackFor = Exception.class)
+	public PurchaseAckResponse getPurchaseDetails(PurchaseRequest request) throws InsufficientAmountException {
+
 		Product product = request.getProduct();
 		product = spbDao.saveProduct(product);
 
 		PaymentInfo paymentInfo = request.getPaymentInfo();
 
+		log.info("validating amount in request with the account balance..!");
 		PaymentUtils.validatePayAmount(paymentInfo.getAccountNo(), product.getTotal());
 
 		paymentInfo.setProductId(product.getId());
 		paymentInfo.setAmount(product.getTotal());
-		
+
 		spbDao.savePaymentInfo(paymentInfo);
 		try {
 			log.info("Product Info : {}", objectMapper.writeValueAsString(product));
@@ -49,7 +51,7 @@ public class ProductService {
 		} catch (JsonProcessingException ex) {
 			log.error("Exception occured - {}", ex.getMessage());
 		}
-		
+
 		return new PurchaseAckResponse(SpbConstants.SUCCESS, paymentInfo.getAmount(),
 				UUID.randomUUID().toString().split("-")[0], product);
 	}
