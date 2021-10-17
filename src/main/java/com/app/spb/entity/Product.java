@@ -28,4 +28,9 @@ public class Product {
 	private double price;
 	@Column(name = "TOTAL")
 	private double total;
+	
+	/*If we specify variable as Date type but wanted to pass the input as String 
+	 * @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+	 * private Date travelDate;
+	 */
 }

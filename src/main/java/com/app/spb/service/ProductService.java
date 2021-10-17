@@ -1,11 +1,18 @@
 package com.app.spb.service;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.app.spb.dto.PurchaseAckResponse;
+import com.app.spb.dto.PurchaseRequest;
+import com.app.spb.entity.PaymentInfo;
 import com.app.spb.entity.Product;
+import com.app.spb.repository.PaymentInfoRepository;
 import com.app.spb.repository.ProductRepository;
+import com.app.spb.utils.PaymentUtils;
 
 import lombok.RequiredArgsConstructor;
 
@@ -14,7 +21,25 @@ import lombok.RequiredArgsConstructor;
 public class ProductService {
 
 	private final ProductRepository productRepository;
-	
+	private final PaymentInfoRepository paymentInfoRepository;
+
+	@Transactional// (readOnly = false, isolation = Isolation.READ_COMMITTED,propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+	public PurchaseAckResponse getPurchaseDetails(PurchaseRequest request) {
+
+		Product product = request.getProduct();
+		product = saveProduct(product);
+
+		PaymentInfo paymentInfo = request.getPaymentInfo();
+		PaymentUtils.validatePayAmount(paymentInfo.getAccountNo(), product.getTotal());
+
+		paymentInfo.setProductId(product.getId());
+		paymentInfo.setAmount(product.getTotal());
+
+		paymentInfoRepository.save(paymentInfo);
+		return new PurchaseAckResponse("SUCCESS", paymentInfo.getAmount(), UUID.randomUUID().toString().split("-")[0],
+				product);
+	}
+
 	public Product saveProduct(Product product) {
 		product.setTotal(product.getPrice() * product.getQuantity());
 		return productRepository.save(product);
@@ -48,8 +73,9 @@ public class ProductService {
 			existing.setName(product.getName());
 			existing.setPrice(product.getPrice());
 			existing.setQuantity(product.getQuantity());
-			existing.setTotal(existing.getPrice()*existing.getQuantity());
+			existing.setTotal(existing.getPrice() * existing.getQuantity());
 		}
 		return productRepository.save(existing);
 	}
+
 }
